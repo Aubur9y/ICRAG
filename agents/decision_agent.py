@@ -2,54 +2,43 @@ from langchain_experimental.graph_transformers.llm import system_prompt
 from openai import OpenAI
 from dotenv import load_dotenv
 import os
-from openai.types.chat import ChatCompletionSystemMessageParam, ChatCompletionUserMessageParam
+import time
+from openai.types.chat import (
+    ChatCompletionSystemMessageParam,
+    ChatCompletionUserMessageParam,
+)
 from utils.prompt_templates import DECISION_AGENT_GENERATION_PROMPT
 
 load_dotenv()
 
+
 class DecisionAgent:
     def __init__(self, model_name="gpt-4o"):
         self.client = OpenAI(api_key=os.environ.get("OPENAI_API_KEY"))
-        self.model=model_name
-        self.system_prompt=DECISION_AGENT_GENERATION_PROMPT
+        self.model = model_name
+        self.system_prompt = DECISION_AGENT_GENERATION_PROMPT
 
     # take in the contexts generated from last step
-    # generate answer
     def generate(self, user_prompt, confidence_level="high"):
         if confidence_level == "low":
-            system_prompt = self.system_prompt + "\nIMPORTANT: The retrieved information has low relevance to the query. Express uncertainty clearly and avoid making definitive statements. If you cannot provide a reliable answer based on the context, state this clearly."
+            system_prompt = (
+                self.system_prompt
+                + "\nIMPORTANT: The retrieved information has low relevance to the query. Express uncertainty clearly and avoid making definitive statements. If you cannot provide a reliable answer based on the context, state this clearly."
+            )
         else:
             system_prompt = self.system_prompt
         messages = [
-            ChatCompletionSystemMessageParam(role="system", content=self.system_prompt),
-            ChatCompletionUserMessageParam(role="user", content=user_prompt)
+            ChatCompletionSystemMessageParam(role="system", content=system_prompt),
+            ChatCompletionUserMessageParam(role="user", content=user_prompt),
         ]
 
+        t0 = time.time()
         response = self.client.chat.completions.create(
-            model=self.model,
-            messages=messages
+            model=self.model, messages=messages
         )
-
-        # if contexts:
-        #     formatted_prompt = f"""
-        # Answer the question: "{query}" based on the following context:
-        # context: {contexts}
-        #
-        # Please provide accurate response based on the above contexts.
-        # """
-        # else:
-        #     formatted_prompt = query
-        #
-        # messages = [
-        #     ChatCompletionSystemMessageParam(role="system", content=self.system_prompt),
-        #     ChatCompletionUserMessageParam(role="user", content=formatted_prompt)
-        # ]
-        # response = self.client.chat.completions.create(
-        #     model=self.model,
-        #     messages=messages
-        # )
-
+        print(f"Time taken for DecisionAgent: {time.time() - t0:.2f}s")
         return response.choices[0].message
+
 
 if __name__ == "__main__":
     context = """

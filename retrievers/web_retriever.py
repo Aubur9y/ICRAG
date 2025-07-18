@@ -5,6 +5,7 @@ import os
 
 load_dotenv()
 
+
 class WebRetrieverAgent:
     def __init__(self, top_k=5):
         self.top_k = top_k
@@ -24,6 +25,7 @@ class WebRetrieverAgent:
         response = tavily_client.search(query)
         return response
 
+
 if __name__ == "__main__":
     agent = WebRetrieverAgent(top_k=3)
     query = "What is the weather like in London today?"
@@ -32,4 +34,4 @@ if __name__ == "__main__":
     # for res in results:
     #     print(f"\nTitle: {res['title']}\nSnippet: {res['snippet']}\nLink: {res['link']}")
 
-    print(results['results'][0]['content'])
+    print(results["results"][0]["content"])

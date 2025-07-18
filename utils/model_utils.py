@@ -5,6 +5,7 @@ import dotenv
 
 dotenv.load_dotenv("../config.env")
 
+
 def initialise_llm(model, temperature=0):
     """
     Initializes the LLM with the specified model and temperature.

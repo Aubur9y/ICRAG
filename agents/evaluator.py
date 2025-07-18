@@ -2,17 +2,19 @@ import os
 import re
 
 from dotenv import load_dotenv
-from langchain_experimental.graph_transformers.llm import system_prompt
 from openai import OpenAI
-from openai.types.chat import ChatCompletionSystemMessageParam, ChatCompletionUserMessageParam
-from sympy.physics.units import temperature
+from openai.types.chat import (
+    ChatCompletionSystemMessageParam,
+    ChatCompletionUserMessageParam,
+)
 
 load_dotenv()
+
 
 def create_evaluation_agent(type):
     client = OpenAI(api_key=os.environ.get("OPENAI_API_KEY"))
 
-    COHERENCE_PROMPT="""
+    COHERENCE_PROMPT = """
     You are an evaluator specialised in evaluating coherency.
     Your job is to evaluate if the given answer to a question is clear, well-structured and logically coherent.
     Please evaluate the following aspects of the answer:
@@ -25,10 +27,10 @@ def create_evaluation_agent(type):
     where 1 is extremely incoherent, and 10 is very coherent.
     Please also provide detailed feedback on the reasons for your score and suggestions for improvement.
     
-    Remember, your very first line MUST be "FINAL SCORE: X/10" to ensure proper score extraction.
+    Remember, your very first line MUST be "COHERENCE EVALUATOR, FINAL SCORE: X/10" to ensure proper score extraction.
     """
 
-    RELEVANCE_PROMPT="""
+    RELEVANCE_PROMPT = """
     You are an evaluator specialised in evaluating relevance of answers.
     Your job is to evaluate if the given answer is relevant to the user query, and whether or not it has leveraged the contexts provided.
     Please evaluate the following aspects of the answer:
@@ -41,10 +43,10 @@ def create_evaluation_agent(type):
     where 1 indicated completely irrelevant and 10 indicates highly relevant.
     Please also provide detailed feedback on the reasons for your score and suggestions for improvement.
     
-    Remember, your very first line MUST be "FINAL SCORE: X/10" to ensure proper score extraction.
+    Remember, your very first line MUST be "RELEVANCE EVALUATOR, FINAL SCORE: X/10" to ensure proper score extraction.
     """
 
-    ACCURACY_PROMPT="""
+    ACCURACY_PROMPT = """
     You are an evaluator specialised in evaluating accuracy of answers.
     Your job is to evaluate if the information in a given answer is accurate and consistent with the provided context.
     1. whether the factual statements in the answer is completely accurate.
@@ -56,7 +58,7 @@ def create_evaluation_agent(type):
     where 1 indicated significantly inaccurate and 10 indicates fully accurate.
     Please also provide detailed feedback on the reasons for your score and suggestions for improvement.
     
-    Remember, your very first line MUST be "FINAL SCORE: X/10" to ensure proper score extraction.
+    Remember, your very first line MUST be "ACCURACY EVALUATOR, FINAL SCORE: X/10" to ensure proper score extraction.
     """
 
     if type == "coherence":
@@ -69,7 +71,8 @@ def create_evaluation_agent(type):
     def evaluate(query, contexts, response):
         messages = [
             ChatCompletionSystemMessageParam(content=system_prompt, role="system"),
-            ChatCompletionUserMessageParam(content=f"""
+            ChatCompletionUserMessageParam(
+                content=f"""
             User query: {query}
             
             Provided contexts:
@@ -79,31 +82,31 @@ def create_evaluation_agent(type):
             {response}
             
             Please evaluate based on the above information.
-            """, role="user")
+            """,
+                role="user",
+            ),
         ]
 
         result = client.chat.completions.create(
-            model="gpt-3.5-turbo",
-            messages=messages,
-            temperature=0.3
+            model="gpt-3.5-turbo", messages=messages, temperature=0.3
         )
 
         content = result.choices[0].message.content
 
-        score_match = re.search(r'FINAL SCORE:\s*(\d+(?:\.\d+)?)/10', content)
+        score_match = re.search(r"FINAL SCORE:\s*(\d+(?:\.\d+)?)/10", content)
         if score_match:
             score = float(score_match.group(1))
         else:
-            score_match = re.search(r'score[:\s]+(\d+(?:\.\d+)?)', content, re.IGNORECASE)
+            score_match = re.search(
+                r"score[:\s]+(\d+(?:\.\d+)?)", content, re.IGNORECASE
+            )
             if score_match:
                 score = float(score_match.group(1))
             else:
-                number_matches = re.findall(r'\b([1-9]|10)(?:\.\d+)?\b', content)
+                number_matches = re.findall(r"\b([1-9]|10)(?:\.\d+)?\b", content)
                 score = float(number_matches[0]) if number_matches else 5.0
-        return {
-            "score": score,
-            "feedback": content
-        }
+        return {"score": score, "feedback": content}
+
     return evaluate
 
 
@@ -115,7 +118,7 @@ class Evaluator:
         self.evaluator_agents = [
             create_evaluation_agent("coherence"),
             create_evaluation_agent("relevance"),
-            create_evaluation_agent("accurate")
+            create_evaluation_agent("accurate"),
         ]
 
     def evaluate(self):
@@ -130,7 +133,7 @@ class Evaluator:
         return {
             "score": avg_score,
             "feedback": feedback,
-            "needs_improvement": avg_score < 7.0
+            "needs_improvement": avg_score < 8,
         }
 
 
@@ -180,7 +183,7 @@ def test_evaluator():
     print(f"Needs Improvement: {evaluation_result['needs_improvement']}")
 
     print("\n--- Feedback ---")
-    for i, feedback in enumerate(evaluation_result['feedback']):
+    for i, feedback in enumerate(evaluation_result["feedback"]):
         print(f"\nEvaluator {i + 1}:\n{feedback}")
 
     return evaluation_result

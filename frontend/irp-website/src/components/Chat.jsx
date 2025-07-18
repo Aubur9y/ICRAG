@@ -3,44 +3,93 @@ import axios from "axios";
 
 export default function Chat() {
   const [input, setInput] = useState("");
-  // const [response, setResponse] = useState(null);
-  // const [userQuestion, setUserQuestion] = useState("");
   const [messages, setMessages] = useState([]);
 
   const handleSubmit = async () => {
+    if (!input.trim()) return;
+
     try {
       const userMessage = { type: "user", text: input };
       setMessages((prev) => [...prev, userMessage]);
-      // setUserQuestion(input);
+      const currentInput = input;
       setInput("");
 
       const res = await axios.post("http://127.0.0.1:5000/apis/query", {
-        user_query: input,
+        user_query: currentInput,
       });
+
+      let responseText = "No response from backend";
+
+      if (res.data) {
+        if (res.data.status === "success" && res.data.data) {
+          responseText = res.data.data;
+        } else if (res.data.answers) {
+          responseText = res.data.answers;
+        } else if (res.data.error) {
+          responseText = `Error: ${res.data.error}`;
+        } else {
+          responseText = `Unexpected response ${JSON.stringify(res.data)}`;
+        }
+      }
 
       const botMessage = {
         type: "bot",
-        text: typeof res.data.data === "string" ? res.data.data : "No response",
+        text: responseText,
       };
       setMessages((prev) => [...prev, botMessage]);
-
-      // setResponse(res.data);
     } catch (error) {
       console.error("Error:", error);
       const errorMessage = { type: "bot", text: error.message };
       setMessages((prev) => [...prev, errorMessage]);
-
-      // setResponse({ status: error, message: error.message });
     }
   };
 
-  const handleFileUpload = (event) => {
+  const handleFileUpload = async (event) => {
     const file = event.target.files[0];
     if (file) {
-      console.log("Uploaded file:", file);
+      try {
+        const formData = new FormData();
+        formData.append("file", file);
+
+        const uploadMessage = {
+          type: "bot",
+          text: `Uploading ${file.name}...`,
+        };
+        setMessages((prev) => [...prev, uploadMessage]);
+
+        const res = await axios.post(
+          "http://127.0.0.1:5000/apis/upload",
+          formData,
+          {
+            headers: {
+              "Content-Type": "multipart/form-data",
+            },
+          }
+        );
+
+        if (res.data.status === "success") {
+          const successMessage = {
+            type: "bot",
+            text: `File "${file.name}" uploaded successfully.`,
+          };
+          setMessages((prev) => [...prev.slice(0, -1), successMessage]);
+        } else {
+          const errorMessage = {
+            type: "bot",
+            text: `Upload failed: ${res.data.message}`,
+          };
+          setMessages((prev) => [...prev.slice(0, -1), errorMessage]);
+        }
+      } catch (error) {
+        console.error("Upload error:", error);
+        const errorMessage = {
+          type: "bot",
+          text: `Upload failed: ${error.message}`,
+        };
+        setMessages((prev) => [...prev.slice(0, -1), errorMessage]);
+      }
     }
   };
-
   return (
     <div className="min-h-screen flex items-center justify-center">
       <div className="w-full max-w-3xl px-4">

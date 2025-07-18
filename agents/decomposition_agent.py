@@ -1,10 +1,13 @@
 import sys
-
 import numpy as np
 import re
 import logging
 from utils.ollama_client import OllamaClient
-from utils.prompt_templates import REWRITE_QUERY_SYSTEM_PROMPT, DECOMPOSE_QUERY_SYSTEM_PROMPT
+from utils.prompt_templates import (
+    REWRITE_QUERY_SYSTEM_PROMPT,
+    DECOMPOSE_QUERY_SYSTEM_PROMPT,
+)
+
 logger = logging.getLogger(__name__)
 
 
@@ -33,7 +36,9 @@ class DecompositionAgent:
         self.similarity_fn = similarity_fn or cosine_similarity
 
     def embed_query(self, plain_query):
-        embedding = self.ollama_client.embed(model=self.embedding_model, input_text=plain_query)
+        embedding = self.ollama_client.embed(
+            model=self.embedding_model, input_text=plain_query
+        )
         return embedding["embeddings"][0]
 
     # 2. Feed to a llm, rewrite query into determiner form, llm gives K outcomes
@@ -41,7 +46,9 @@ class DecompositionAgent:
         messages = [
             {
                 "role": "system",
-                "content": REWRITE_QUERY_SYSTEM_PROMPT.format(num_rewrites=self.num_rewrites),
+                "content": REWRITE_QUERY_SYSTEM_PROMPT.format(
+                    num_rewrites=self.num_rewrites
+                ),
             },
             {"role": "user", "content": query_to_rewrite},
         ]
@@ -54,7 +61,7 @@ class DecompositionAgent:
 
             for i in range(len(parts)):
                 if parts[i][0].isdigit():
-                    match = re.match(r'^\d+\.\s+(.*)', parts[i])
+                    match = re.match(r"^\d+\.\s+(.*)", parts[i])
                     if match:
                         rewritten_messages[i] = match.group(1).strip()
         return rewritten_messages
@@ -89,7 +96,9 @@ class DecompositionAgent:
             },
             {"role": "user", "content": rewritten_query},
         ]
-        response = self.ollama_client.chat(model=self.llm_model, message=sub_task_message)
+        response = self.ollama_client.chat(
+            model=self.llm_model, message=sub_task_message
+        )
         sub_tasks = []
         if response.message.content:
             content = response.message.content
@@ -97,7 +106,7 @@ class DecompositionAgent:
 
             for part in parts:
                 if part[0].isdigit():
-                    match = re.match(r'^\d+\.\s+(.*)', part)
+                    match = re.match(r"^\d+\.\s+(.*)", part)
                     if match:
                         sub_tasks.append(match.group(1).strip())
         return sub_tasks
