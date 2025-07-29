@@ -7,4 +7,4 @@ This prompt gives feedback to each individual parts of the framework with person
 
 
 Architecture of the project.
-![framework](figures/rag_arch.png)
+![framework](figures/rag_arch_v2.png)
