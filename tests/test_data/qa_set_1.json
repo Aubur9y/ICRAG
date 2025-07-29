@@ -1,0 +1,394 @@
+[
+  {
+    "Difficulty": "simple",
+    "Question": "What is the first learning objective of the Environmental Data module?",
+    "Answer": "Understand common data format and database structures specific to representative fields of environmental science.",
+    "Source": "Document 1, Learning Objectives"
+  },
+  {
+    "Difficulty": "simple",
+    "Question": "What is the second learning objective of the Environmental Data module?",
+    "Answer": "Demonstrate technical competency in handling common data types routinely encountered in the environmental sciences and identify relevant open-source data repositories.",
+    "Source": "Document 1, Learning Objectives"
+  },
+  {
+    "Difficulty": "simple",
+    "Question": "What is the third learning objective of the Environmental Data module?",
+    "Answer": "Identify and design suitable data analysis strategies that consider data types, data distribution constraints, strength, benefits and limitations of statistical and modelling tools and environmental dynamics.",
+    "Source": "Document 1, Learning Objectives"
+  },
+  {
+    "Difficulty": "simple",
+    "Question": "What is the fourth learning objective of the Environmental Data module?",
+    "Answer": "Understand the limitation of available data and data analysis products, including sources of errors and the ability to comprehensively characterize uncertainties and interpret results.",
+    "Source": "Document 1, Learning Objectives"
+  },
+  {
+    "Difficulty": "simple",
+    "Question": "What does MIP stand for?",
+    "Answer": "Model Intercomparison Project.",
+    "Source": "Document 1, Using climate models: uncertainties and sensitivities"
+  },
+  {
+    "Difficulty": "simple",
+    "Question": "How many realizations of Earth do we have in real world data?",
+    "Answer": "One realization.",
+    "Source": "Document 1, Real world vs model data"
+  },
+  {
+    "Difficulty": "simple",
+    "Question": "What informal phrase describes the freedom modelers have with model data?",
+    "Answer": "“we do what the @#$ we want”.",
+    "Source": "Document 1, Real world vs model data"
+  },
+  {
+    "Difficulty": "simple",
+    "Question": "Which organization’s website is listed for climate change impacts resources?",
+    "Answer": "NOAA (https://www.noaa.gov/education/resource-collections/climate/climate-change-impacts).",
+    "Source": "Document 1, Resource links"
+  },
+  {
+    "Difficulty": "simple",
+    "Question": "Which company’s media release is cited for global-catastrophes estimate?",
+    "Answer": "Swiss Re.",
+    "Source": "Document 1, Attribution links"
+  },
+  {
+    "Difficulty": "simple",
+    "Question": "Name two variables listed under \"What variable?\" in the context of climate extremes.",
+    "Answer": "Temperature (T) and precipitation.",
+    "Source": "Document 1, Climate extremes and risk"
+  },
+  {
+    "Difficulty": "simple",
+    "Question": "What is one human sector mentioned as impacted by climate extremes?",
+    "Answer": "Agriculture.",
+    "Source": "Document 1, Climate extremes and risk"
+  },
+  {
+    "Difficulty": "simple",
+    "Question": "Which UK institution’s website is given for climate services?",
+    "Answer": "The Met Office (https://www.metoffice.gov.uk).",
+    "Source": "Document 1, Climate services links"
+  },
+  {
+    "Difficulty": "simple",
+    "Question": "Who authored the 2021 Nature article advocating for professionalized climate projection?",
+    "Answer": "Fiedler et al. 2021.",
+    "Source": "Document 1, Fiedler et al. 2021"
+  },
+  {
+    "Difficulty": "simple",
+    "Question": "What simple analytical equation is used to illustrate a model in Document 2?",
+    "Answer": "dC/dt = λ.",
+    "Source": "Document 2, What does a model need?"
+  },
+  {
+    "Difficulty": "simple",
+    "Question": "What process converts continuous equations into discrete form for numerical solutions?",
+    "Answer": "Discretization.",
+    "Source": "Document 2, Discretization"
+  },
+  {
+    "Difficulty": "simple",
+    "Question": "Which numerical scheme is known as Forward Euler?",
+    "Answer": "Forward difference.",
+    "Source": "Document 2, Numerical schemes"
+  },
+  {
+    "Difficulty": "simple",
+    "Question": "Which numerical scheme requires solving an extra equation and is called backward Euler?",
+    "Answer": "Backward difference.",
+    "Source": "Document 2, Numerical schemes"
+  },
+  {
+    "Difficulty": "simple",
+    "Question": "Which numerical scheme uses information from both previous and next points (i+1 and i-1)?",
+    "Answer": "Centered difference.",
+    "Source": "Document 2, Numerical schemes"
+  },
+  {
+    "Difficulty": "simple",
+    "Question": "Who is the Nobel prize-winning scientist mentioned in Document 2?",
+    "Answer": "Syukuro “Suki” Manabe.",
+    "Source": "Document 2, Model complexity vs resolution"
+  },
+  {
+    "Difficulty": "simple",
+    "Question": "How many cores does each node have in the UK’s Cray XC30?",
+    "Answer": "12 cores.",
+    "Source": "Document 2, Computing infrastructure"
+  },
+  {
+    "Difficulty": "simple",
+    "Question": "What is the memory per node on the Cray XC30?",
+    "Answer": "64 GB.",
+    "Source": "Document 2, Computing infrastructure"
+  },
+  {
+    "Difficulty": "simple",
+    "Question": "What repository URL is given for the archive of climate data?",
+    "Answer": "https://archive.ceda.ac.uk/.",
+    "Source": "Document 2, Data management"
+  },
+  {
+    "Difficulty": "simple",
+    "Question": "What is one key requirement for a numerical model besides equations?",
+    "Answer": "Initial and boundary conditions.",
+    "Source": "Document 2, What does a model need?"
+  },
+  {
+    "Difficulty": "simple",
+    "Question": "What is the first common misconception about modeling listed in Document 3?",
+    "Answer": "The goal of modeling is to reproduce data.",
+    "Source": "Document 3, Common misconceptions"
+  },
+  {
+    "Difficulty": "simple",
+    "Question": "What happens to computational cost when spatial resolution is doubled in all dimensions?",
+    "Answer": "Computations increase 8×, memory increases 8×, and time increases 8×.",
+    "Source": "Document 3, Model resolution"
+  },
+  {
+    "Difficulty": "simple",
+    "Question": "What term describes the ratio of partial pressure of water vapor to its equilibrium partial pressure?",
+    "Answer": "Relative humidity.",
+    "Source": "Document 3, Hydrologic cycle challenge"
+  },
+  {
+    "Difficulty": "simple",
+    "Question": "Which atmospheric process can both cool and warm the climate?",
+    "Answer": "Clouds.",
+    "Source": "Document 3, Clouds challenge"
+  },
+  {
+    "Difficulty": "simple",
+    "Question": "What does OSSE stand for?",
+    "Answer": "Observational System Simulation Experiments.",
+    "Source": "Document 3, Comparing models with data"
+  },
+  {
+    "Difficulty": "simple",
+    "Question": "What data assimilation method is mentioned in Document 3?",
+    "Answer": "Four-dimensional variational assimilation (4).",
+    "Source": "Document 3, Role of observations"
+  },
+
+  {
+    "Difficulty": "medium",
+    "Question": "List the four purposes of discussing climate data and climate models as given in Document 1.",
+    "Answer": "1. Understand common data formats and database structures; 2. Demonstrate technical competency in handling data types and identify open-source repositories; 3. Identify and design suitable data analysis strategies considering data distributions and modelling tools; 4. Understand data limitations, sources of errors, and characterize uncertainties.",
+    "Source": "Document 1, Why discuss climate data and climate models?"
+  },
+  {
+    "Difficulty": "medium",
+    "Question": "What are the main uses of climate models described in Document 1?",
+    "Answer": "Quantification/forecasting (impacts, adaptation, mitigation); design of scenarios (policy, technology options); analysis of variability (temporal, spatial); study of uncertainties and sensitivities (with ensembles); and attribution (determining causality and responsibility).",
+    "Source": "Document 1, Using climate models sections"
+  },
+  {
+    "Difficulty": "medium",
+    "Question": "Name three types of uncertainties addressed by climate model ensembles.",
+    "Answer": "Measurement errors, environmental uncertainties, and errors stemming from analytical procedures (e.g., calibration using synthetic data/models).",
+    "Source": "Document 1, Why discuss climate data and climate models?"
+  },
+  {
+    "Difficulty": "medium",
+    "Question": "Which five URLs are provided for climate services and analytics businesses in Document 1?",
+    "Answer": "https://www.metoffice.gov.uk; https://cervest.earth; https://www.spglobal.com/marketintelligence/en/campaigns/esg-analysis; https://www.ukclimaterisk.org; https://www.ibm.com/uk-en/products/environmental-intelligence-suite; https://www.rms.com/climate-change.",
+    "Source": "Document 1, Business risk and climate analytics"
+  },
+  {
+    "Difficulty": "medium",
+    "Question": "Summarize the three types of numerical integration schemes illustrated in Document 2 and one key characteristic of each.",
+    "Answer": "Forward difference (Forward Euler) uses Ci+1 = Ci (1 + λΔt); Backward difference (Backward Euler) is implicit and requires solving an extra equation; Centered difference uses information from both past and future points (Ci−1 and Ci+1) and improves accuracy at the cost of needing more data points.",
+    "Source": "Document 2, Numerical schemes"
+  },
+  {
+    "Difficulty": "medium",
+    "Question": "What are the main steps required to implement a simple numerical model for dC/dt = λC?",
+    "Answer": "Discretize the derivative using a chosen scheme (e.g., forward, backward, centered difference), choose time and space steps (Δt, Δx, etc.), and perform numerical integration to step the solution from initial time to final time.",
+    "Source": "Document 2, Discretization and numerical integration"
+  },
+  {
+    "Difficulty": "medium",
+    "Question": "Describe two challenges of coupling different modules in a climate model.",
+    "Answer": "Mismatch of spatial grids between modules (e.g., atmospheric grid covering ocean, land, sea-ice) and differing characteristic time-scales, which affect choice of integration time-step.",
+    "Source": "Document 2, What is model coupling?"
+  },
+  {
+    "Difficulty": "medium",
+    "Question": "What are the five main sources of high cost in running modern climate models?",
+    "Answer": "Financial cost, energy consumption, personnel requirements, data storage needs, and data analysis resources.",
+    "Source": "Document 2, Computing infrastructure"
+  },
+  {
+    "Difficulty": "medium",
+    "Question": "What are three key benefits of improving spatial resolution in climate models?",
+    "Answer": "Better numerical accuracy (smaller discretization steps), improved representation of topography/bathymetry, and the ability to explicitly include subgrid-scale processes (e.g., eddies).",
+    "Source": "Document 3, Benefits of improving resolution"
+  },
+  {
+    "Difficulty": "medium",
+    "Question": "Explain why increasing spatial resolution also requires an increase in temporal resolution.",
+    "Answer": "To maintain numerical stability, decreasing the grid spacing (higher spatial resolution) requires a correspondingly smaller time-step, increasing computational demand (>16× slower when time-step is reduced along with doubling spatial resolution).",
+    "Source": "Document 3, Model resolution"
+  },
+  {
+    "Difficulty": "medium",
+    "Question": "List four common misconceptions about climate modeling identified in Document 3.",
+    "Answer": "1. The goal of modeling is to reproduce data; 2. If a model doesn’t fit the data, it’s useless; 3. Modelers don’t care about data; 4. Missing explicit process W means the model cannot simulate effect Z.",
+    "Source": "Document 3, Common misconceptions"
+  },
+  {
+    "Difficulty": "medium",
+    "Question": "What factors contribute to numerical diffusion in climate models?",
+    "Answer": "The choice of numerical scheme (forward, backward, centered), grid resolution, and lack of an exact solution test, leading to smearing of features over time.",
+    "Source": "Document 2, Testing the numerical core"
+  },
+  {
+    "Difficulty": "medium",
+    "Question": "What are two roles of observational data in climate modeling?",
+    "Answer": "Constraining model parameterizations and performing data assimilation (e.g., 4) to fit models to observations.",
+    "Source": "Document 3, Role of observations in modeling"
+  },
+  {
+    "Difficulty": "medium",
+    "Question": "Compare and contrast a ‘just model’ and a ‘reanalysis product’ as defined in Document 3.",
+    "Answer": "A ‘just model’ runs independently of data; a ‘reanalysis product’ assimilates observations (tuning some parameters to fit data) to produce high-resolution spatio-temporal climate estimates.",
+    "Source": "Document 3, Models vs observations"
+  },
+  {
+    "Difficulty": "medium",
+    "Question": "What guidance is given for selecting a climate model product for a specific analysis?",
+    "Answer": "Choose a simpler model if it suffices (to reduce data processing), and match model complexity and resolution to the question and scales of interest.",
+    "Source": "Document 3, What model for what process?"
+  },
+  {
+    "Difficulty": "medium",
+    "Question": "What are three main sources of uncertainty to consider in climate model analysis, according to the take-home messages?",
+    "Answer": "Numerics and choice of equations/implementation; resolution and parameterizations; boundary conditions and forcing; internal dynamics.",
+    "Source": "Document 3, Take home messages"
+  },
+  {
+    "Difficulty": "medium",
+    "Question": "Explain the trade-off between model complexity and computational speed discussed in Document 2.",
+    "Answer": "Adding complexity (more processes, finer grids) improves realism but increases computational cost, whereas simplifying models speeds up simulations at the expense of detail.",
+    "Source": "Document 2, Model complexity vs resolution"
+  },
+  {
+    "Difficulty": "medium",
+    "Question": "What experimental design practice is emphasized as key for modelers in Document 3?",
+    "Answer": "Designing meaningful experiments and knowing how to interpret incomplete/uncertain results.",
+    "Source": "Document 3, Common misconceptions"
+  },
+  {
+    "Difficulty": "medium",
+    "Question": "What are the characteristic time-scales connected by coupled climate models?",
+    "Answer": "From about 10^5 seconds (1.5 days) for atmosphere to 10^10 seconds (300 years) for deep ocean.",
+    "Source": "Document 2, Interconnecting reservoirs"
+  },
+  {
+    "Difficulty": "medium",
+    "Question": "Describe two challenges in comparing model outputs to observational data.",
+    "Answer": "Determining whether model grid-point values correspond to point observations spatially and temporally, and understanding sampling and averaging differences.",
+    "Source": "Document 3, Comparing models with data"
+  },
+  {
+    "Difficulty": "medium",
+    "Question": "What system is described as the numerical equivalent of calibration in the lab for models with no exact solution?",
+    "Answer": "Idealized simulations using known analytic fields (e.g., u(x,y)=sin²(πx)sin(2πy)cos(πt/5)).",
+    "Source": "Document 2, Testing the numerical core"
+  },
+  {
+    "Difficulty": "medium",
+    "Question": "List three components required for data management infrastructure in climate modeling.",
+    "Answer": "Input data (initial/boundary conditions, observations), output data (model results, 4D data), and derived or interpreted products for non-expert users.",
+    "Source": "Document 2, Data management infrastructure"
+  },
+  {
+    "Difficulty": "medium",
+    "Question": "How does model resolution affect representation of topography and subgrid processes?",
+    "Answer": "Higher resolution yields better representation of mountains, islands, and allows explicit inclusion of subgrid processes like eddies; lower resolution requires parameterizations.",
+    "Source": "Document 3, Benefits of improving resolution"
+  },
+  {
+    "Difficulty": "medium",
+    "Question": "What is the 'coupler' in a coupled climate model?",
+    "Answer": "The software component that exchanges fluxes (heat, water, momentum, energy) between atmospheric, oceanic, land, and ice modules.",
+    "Source": "Document 2, The coupler"
+  },
+
+  {
+    "Difficulty": "hard",
+    "Question": "How do forward, backward, and centered difference schemes compare in their numerical behavior for solving dC/dt = λC, and what implications does this have for climate modeling?",
+    "Answer": "Forward difference (forward Euler) is explicit and can be unstable for large Δt, backward difference (backward Euler) is implicit and unconditionally stable but diffusive, and centered difference is more accurate but requires additional points and can introduce dispersion; choice affects stability, accuracy, and numerical diffusion in climate simulations.",
+    "Source": "Document 2, Numerical schemes and testing"
+  },
+  {
+    "Difficulty": "hard",
+    "Question": "Describe the full workflow from raw observations to climate service products, including major steps and sources of uncertainty at each stage.",
+    "Answer": "Observations are ingested (uncertainties from instrument errors), models are initialized with these data (boundary/initial condition errors), equations are discretized and integrated (numerical scheme and resolution errors), output is post-processed into gridded datasets (interpolation errors), and interpreted for non-expert users (communication uncertainties).",
+    "Source": "Document 1, Why discuss climate data?; Document 2, Data management; Document 3, Take home messages"
+  },
+  {
+    "Difficulty": "hard",
+    "Question": "How do the objectives of quantification/forecasting and attribution differ in the use of climate models, and what modelling strategies are unique to each?",
+    "Answer": "Quantification/forecasting uses ensembles to project future impacts, adaptation, and mitigation scenarios requiring scenario design and variability analysis; attribution isolates causal factors using tailored model experiments and counterfactual ensembles to determine responsibility, requiring sensitivity and uncertainty analyses.",
+    "Source": "Document 1, Using climate models: quantification/forecasting & attribution"
+  },
+  {
+    "Difficulty": "hard",
+    "Question": "Explain how grid mismatch and conservation requirements complicate coupling atmospheric and ocean modules, and propose numerical approaches to address these issues.",
+    "Answer": "Grids differ in resolution and coverage (one atmospheric cell may span ocean, land, ice), requiring interpolation or remapping schemes that conserve mass, momentum, and energy; approaches include conservative interpolation, flux adjustment, and staggered grids to align interfaces and maintain conserved properties.",
+    "Source": "Document 2, What is model coupling?"
+  },
+  {
+    "Difficulty": "hard",
+    "Question": "Integrate information on model resolution, numerical diffusion, and cloud microphysics to discuss why predicting precipitation magnitude and location remains challenging.",
+    "Answer": "Cloud microphysics operate at scales much smaller than model grid cells, so parameterizations introduce uncertainty; higher resolution reduces numerical diffusion and better captures gradients, but at high computational cost; combined, coarse grids, diffusive schemes, and simplified microphysics lead to large errors in precipitation prediction.",
+    "Source": "Document 2, Testing the numerical core; Document 3, Clouds challenge; Document 3, Benefits of improving resolution"
+  },
+  {
+    "Difficulty": "hard",
+    "Question": "Compare and contrast the roles of data assimilation in weather forecasting versus climate reanalysis, including time scales, data types, and model adjustments.",
+    "Answer": "Weather forecasting uses real-time observations with high-frequency assimilation (often 4) to produce short-term forecasts; climate reanalysis applies assimilation over decades to generate consistent gridded climate records, tuning model parameters more heavily and relying on historical datasets, without forecasting requirements.",
+    "Source": "Document 3, Models vs observations; Document 3, Role of observations in modeling"
+  },
+  {
+    "Difficulty": "hard",
+    "Question": "Evaluate the statement ‘all models are wrong and incomplete’ in the context of climate projection as an operational service, referring to Fiedler et al. 2021.",
+    "Answer": "Fiedler et al. (2021) argue that while models are inherently simplified and may omit processes, they are valuable if internally consistent and properly characterized for uncertainties; professionalizing climate projection requires operational frameworks that document model limitations and provide probabilistic projections despite incompleteness.",
+    "Source": "Document 1, Fiedler et al. 2021; Document 3, Take home messages"
+  },
+  {
+    "Difficulty": "hard",
+    "Question": "What factors must be balanced when choosing between high-resolution, short-duration simulations and low-resolution, long-duration ensemble runs for a given climate research question?",
+    "Answer": "High resolution offers detailed local extremes and better dynamics but limits ensemble size and duration; low resolution enables many long ensemble runs for statistical robustness and forced response analysis but at the cost of subgrid processes and local extremes, so choice depends on whether detailed process understanding or probabilistic long-term trends are prioritized.",
+    "Source": "Document 3, What model for what process?"
+  },
+  {
+    "Difficulty": "hard",
+    "Question": "Describe how experimental design principles apply to idealized simulations used for testing numerical cores when no analytical solution exists.",
+    "Answer": "Idealized simulations use known analytic flow fields (e.g., sinusoidal u, v) and reverse integration to assess error accumulation; experimental design requires choosing flows that test advection, diffusion, and reversibility, controlling variables to isolate numerical diffusion and dispersion characteristics.",
+    "Source": "Document 2, Testing the numerical core"
+  },
+  {
+    "Difficulty": "hard",
+    "Question": "Integrate concepts from Documents 1 and 3 to explain how uncertainty characterization in climate data analysis influences policy scenario design.",
+    "Answer": "Uncertainties in observations, model parameterizations, and numerical schemes must be quantified (Document 1); these inform scenario ranges and sensitivity tests in policy design (Document 3), ensuring decision-makers see probabilistic outcomes rather than single deterministic forecasts.",
+    "Source": "Document 1, Why discuss climate data?; Document 3, Take home messages"
+  },
+  {
+    "Difficulty": "hard",
+    "Question": "How does the need for conserving properties in coupled models relate to the conservation properties emphasized as merits of models over ‘arm-wavy’ arguments?",
+    "Answer": "Conservative coupling ensures mass, momentum, and energy are preserved across modules, reflecting models’ internal consistency and conservation properties; this rigor contrasts with qualitative arguments that lack quantifiable conservation checks.",
+    "Source": "Document 1, Better propositions; Document 2, What is model coupling?"
+  },
+  {
+    "Difficulty": "hard",
+    "Question": "Explain how internal variability and forced response are disentangled using ensemble simulations, and describe the data volume challenges that result.",
+    "Answer": "Multiple ensemble members with slightly perturbed initial conditions isolate internal variability by averaging trajectories to highlight forced signals; hundreds of runs generate massive 4D datasets, creating storage and analysis challenges.",
+    "Source": "Document 3, Internal variability vs forced response (Ensembles)"
+  }
+]

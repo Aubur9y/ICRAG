@@ -85,8 +85,6 @@ class DecompositionAgent:
 
         return best_candidate
 
-    # 5. Perform sanity check on rewrite query, for all the queries that passed the sanity check pick the one with the best score
-
     # 6. feed the final query into a llm and split into three sub-tasks
     def decompose_query(self, rewritten_query):
         sub_task_message = [
@@ -136,6 +134,112 @@ class DecompositionAgent:
             "best_rewritten_query": best_rewritten_query,
             "sub_tasks": sub_tasks,
         }
+
+    def process_with_feedback(self, query, feedback=None):
+        if feedback and "decomposition" in feedback.lower():
+            enhanced_query = self.enhance_query_with_feedback(query, feedback)
+
+            query_embedding = self.embed_query(enhanced_query)
+            logger.info("Processing with decomposition feedback...")
+
+            rewritten_queries_dict = self.rewrite_with_feedback(
+                enhanced_query, feedback
+            )
+
+            best_rewritten_query = self.select_best_rewrite(
+                query_embedding, rewritten_queries_dict
+            )
+
+            sub_tasks = self.decompose_with_feedback(best_rewritten_query, feedback)
+
+            return {
+                "original_query": query,
+                "rewritten_queries": rewritten_queries_dict,
+                "best_rewritten_query": best_rewritten_query,
+                "sub_tasks": sub_tasks,
+            }
+        else:
+            return self.process(query)
+
+    def enhance_query_with_feedback(self, query, feedback):
+        if "incomplete coverage" in feedback.lower():
+            return f"Comprehensively analyse all aspects of: {query}"
+        elif "too fragmented" in feedback.lower():
+            return f"Break down into broader, well-connected components: {query}"
+        elif "too broad" in feedback.lower():
+            return f"Break down into more specific, focused elements: {query}"
+        return query
+
+    def rewrite_with_feedback(self, query, feedback):
+        enhanced_prompt = REWRITE_QUERY_SYSTEM_PROMPT.format(
+            num_rewrites=self.num_rewrites
+        )
+
+        if "incomplete coverage" in feedback.lower():
+            enhanced_prompt += "\nEnsure the rewritten queries capture ALL aspects of the original question."
+        elif "granularity" in feedback.lower():
+            enhanced_prompt += "\nFocus on creating queries with appropriate level of detail - not too broad, not too narrow."
+
+        messages = [
+            {"role": "system", "content": enhanced_prompt},
+            {"role": "user", "content": query},
+        ]
+
+        response = self.ollama_client.chat(model=self.llm_model, message=messages)
+
+        rewritten_messages = dict()
+        if response.message.content:
+            content = response.message.content
+            parts = [line for line in content.split("\n") if line.strip()]
+
+            for i in range(len(parts)):
+                if parts[i][0].isdigit():
+                    match = re.match(
+                        r"^\d+\.\s+(.*)", parts[i]
+                    )  # "1.content", get the content part, so no "1."
+                    if match:
+                        rewritten_messages[i] = match.group(1).strip()
+        return rewritten_messages
+
+    def decompose_with_feedback(self, rewritten_query, feedback):
+        enhanced_decompose_prompt = DECOMPOSE_QUERY_SYSTEM_PROMPT
+
+        if "incomplete coverage" in feedback.lower():
+            enhanced_decompose_prompt += "\nMake sure to create sub-tasks that cover ALL aspects of the query comprehensively."
+        elif "too fragmented" in feedback.lower():
+            enhanced_decompose_prompt += (
+                "\nCreate fewer, broader sub-tasks that maintain logical connections."
+            )
+        elif "too broad" in feedback.lower():
+            enhanced_decompose_prompt += (
+                "\nCreate more specific, focused sub-tasks with clear boundaries."
+            )
+        elif "logical relationships" in feedback.lower():
+            enhanced_decompose_prompt += (
+                "\nEnsure sub-tasks have clear logical progression and dependencies."
+            )
+
+        sub_task_message = [
+            {"role": "system", "content": enhanced_decompose_prompt},
+            {"role": "user", "content": rewritten_query},
+        ]
+
+        response = self.ollama_client.chat(
+            model=self.llm_model, message=sub_task_message
+        )
+
+        sub_tasks = []
+        if response.message.content:
+            content = response.message.content
+            parts = [line for line in content.split("\n") if line.strip()]
+
+            for part in parts:
+                if part[0].isdigit():
+                    match = re.match(r"^\d+\.\s+(.*)", part)
+                    if match:
+                        sub_tasks.append(match.group(1).strip())
+
+        return sub_tasks
 
 
 # Testing

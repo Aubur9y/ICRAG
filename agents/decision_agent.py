@@ -1,21 +1,22 @@
-from langchain_experimental.graph_transformers.llm import system_prompt
 from openai import OpenAI
 from dotenv import load_dotenv
 import os
 import time
+import requests
 from openai.types.chat import (
     ChatCompletionSystemMessageParam,
     ChatCompletionUserMessageParam,
 )
+
+from utils.model_service import chat_with_model, chat_with_model_thinking
 from utils.prompt_templates import DECISION_AGENT_GENERATION_PROMPT
 
 load_dotenv()
 
 
 class DecisionAgent:
-    def __init__(self, model_name="gpt-4o"):
+    def __init__(self):
         self.client = OpenAI(api_key=os.environ.get("OPENAI_API_KEY"))
-        self.model = model_name
         self.system_prompt = DECISION_AGENT_GENERATION_PROMPT
 
     # take in the contexts generated from last step
@@ -27,17 +28,29 @@ class DecisionAgent:
             )
         else:
             system_prompt = self.system_prompt
+
+        # Using OpenAI API
+        # messages = [
+        #     ChatCompletionSystemMessageParam(role="system", content=system_prompt),
+        #     ChatCompletionUserMessageParam(role="user", content=user_prompt),
+        # ]
+        # response = self.client.chat.completions.create(
+        #     model=self.model, messages=messages
+        # )
+
+        # Using OpenWebUI API
         messages = [
-            ChatCompletionSystemMessageParam(role="system", content=system_prompt),
-            ChatCompletionUserMessageParam(role="user", content=user_prompt),
+            {"role": "system", "content": system_prompt},
+            {"role": "user", "content": user_prompt},
         ]
 
         t0 = time.time()
-        response = self.client.chat.completions.create(
-            model=self.model, messages=messages
+        response = chat_with_model(
+            messages=messages,
         )
+
         print(f"Time taken for DecisionAgent: {time.time() - t0:.2f}s")
-        return response.choices[0].message
+        return response
 
 
 if __name__ == "__main__":
@@ -69,4 +82,4 @@ if __name__ == "__main__":
 
     agent = DecisionAgent()
     response = agent.generate(initial_prompt)
-    print(response.content)
+    print(response)

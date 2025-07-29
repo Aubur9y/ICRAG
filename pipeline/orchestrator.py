@@ -184,9 +184,11 @@ def pipeline(user_query, max_retries=2):
 
     # logger.info(f"Contexts for generation: {contexts_for_generation}")
 
-    # rerank and soft-voting
+    # rerank
     reranker = Reranker()
-    reranker.rerank(best_rewritten_query, contexts_for_generation)
+    contexts_for_generation = reranker.rerank(
+        best_rewritten_query, contexts_for_generation
+    )
 
     logger.info("Context reranked")
 
@@ -209,7 +211,7 @@ def pipeline(user_query, max_retries=2):
             prompt_for_generation = f"""
             Answer the question: "{query_to_answer}" based on the following context:
             context: {final_context_str}
-            
+
             Please provide an accurate and comprehensive response based on the above contexts.
             """
         else:
@@ -217,17 +219,17 @@ def pipeline(user_query, max_retries=2):
             logger.info("Constructing calibration prompt with feedback.")
             prompt_for_generation = f"""
             Your previous attempt to answer the question "{best_rewritten_query}" was not sufficient.
-            
+
             Here is the feedback on your last answer:
             --- FEEDBACK ---
             {last_feedback}
             --- END FEEDBACK ---
-            
+
             Here is the original context again:
             --- CONTEXT ---
             {final_context_str}
             --- END CONTEXT ---
-            
+
             Please generate a new, improved answer that directly addresses the feedback and better utilises the provided context.
             """
             logger.info(f"Feedback: {prompt_for_generation}")

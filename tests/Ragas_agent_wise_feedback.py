@@ -9,7 +9,7 @@ from ragas.metrics import (
     context_recall,
 )
 from ragas import evaluate, EvaluationDataset
-from pipeline.orchestrator import pipeline
+from pipeline.orchestrator_agent_wise_feedback import pipeline
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
@@ -21,18 +21,25 @@ def pipeline_execution(question):
 
         # 如果返回的是字符串，需要构造合适的格式
         if isinstance(result, str):
-            return {"contexts": [], "answers": result}  # 如果没有上下文信息，返回空列表
-        elif isinstance(result, dict):
-            return result
-        else:
-            logger.warning(f"Unexpected result type: {type(result)}")
-            return {"contexts": [], "answers": str(result)}
+            return {"contexts": [], "answers": result, "question": question}
+
+        if isinstance(result, dict):
+            if "contexts" in result and "answers" in result:
+                return result
+            else:
+                logger.warning(
+                    f"Incomplete result structure for question: {question[:50]}..."
+                )
+                return None
+
+        logger.warning(f"Unexpected result type: {type(result)}")
+        return None
 
     except Exception as e:
         logger.error(
             f"Pipeline execution failed for question: {question[:50]}... Error: {e}"
         )
-        return {"contexts": [], "answers": "Error occurred during processing"}
+        return None
 
 
 def validate_result(results):
@@ -266,7 +273,7 @@ if results:
     # save intermediate results
     timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
     with open(
-        os.path.join(output_folder, f"ragas_test_results_{timestamp}.json"),
+        os.path.join(output_folder, f"ragas_test_results_awf_{timestamp}.json"),
         "w",
         encoding="utf-8",
     ) as f:
@@ -281,9 +288,37 @@ if results:
     print("=== RAGAS EVALUATION RESULTS ===")
     print(ragas_results)
 
+    metric_scores = ragas_results.scores
+
     try:
+        # results_dict = {
+        #     "metrics": metric_scores,
+        #     "timestamp": timestamp,
+        #     "total_questions": len(qa_pairs),
+        #     "valid_results": len(results),
+        # }
+        #
+        # logger.info(
+        #     f"Saving evaluation results to ragas_agent_wise_feedback_{timestamp}.json"
+        # )
+        # logger.info(f"Results dict: {results_dict}")
+        #
+        # # save evaluation results
+        # with open(
+        #     os.path.join(output_folder, f"ragas_agent_wise_feedback_{timestamp}.json"),
+        #     "w",
+        #     encoding="utf-8",
+        # ) as f:
+        #     json.dump(results_dict, f, ensure_ascii=False, indent=2)
+        #
+        # logger.info(
+        #     f"Evaluation results saved to ragas_agent_wise_feedback_{timestamp}.json"
+        # )
+
         with open(
-            os.path.join(output_folder, f"ragas_raw_{timestamp}.txt"),
+            os.path.join(
+                output_folder, f"ragas_agent_wise_feedback_raw_{timestamp}.txt"
+            ),
             "w",
             encoding="utf-8",
         ) as f:
@@ -291,6 +326,14 @@ if results:
 
     except Exception as e:
         logger.error(f"Failed to save evaluation results: {e}")
-
+        # # backup saving
+        # with open(
+        #     os.path.join(
+        #         output_folder, f"ragas_agent_wise_feedback_raw_{timestamp}.txt"
+        #     ),
+        #     "w",
+        #     encoding="utf-8",
+        # ) as f:
+        #     f.write(str(ragas_results))
 else:
     logger.error("No valid results to evaluate")

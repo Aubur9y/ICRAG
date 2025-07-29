@@ -3,6 +3,8 @@ import os
 import logging
 from pathlib import Path
 from dotenv import load_dotenv
+
+from utils.model_service import chat_with_model_thinking, chat_with_model
 from utils.ollama_client import OllamaClient
 
 import networkx as nx
@@ -104,24 +106,34 @@ class KnowledgeGraphBuilder:
 
     def extract_entities_and_relations(self, text):
         # extract entities and relations from text
-        text_truncated = text[:1500] if len(text) > 1500 else text
+        # text_truncated = text[:1500] if len(text) > 1500 else text
 
         prompt = f"""Extract entities and relations from the following text. Return ONLY a valid JSON object without any additional text or formatting:
 
         {{"entities": [{{"name": "entity_name", "type": "entity_type", "description": "brief_description"}}], "relations": [{{"source": "source_entity", "target": "target_entity", "relation": "relation_type"}}]}}
 
-        Text: {text_truncated}"""
+        Text: {text}"""
 
         try:
-            response = self.client.chat.completions.create(
-                model="gpt-4o-mini",
-                messages=[{"role": "user", "content": prompt}],
-                temperature=0.1,
-            )
-            response_text = response.choices[0].message.content
+            # response = self.client.chat.completions.create(
+            #     model="gpt-4o-mini",
+            #     messages=[{"role": "user", "content": prompt}],
+            #     temperature=0.1,
+            # )
+            # response_text = response.choices[0].message.content
+
+            messages = [
+                {
+                    "role": "system",
+                    "content": "You are an assistant that extracts entities and relations from text.",
+                },
+                {"role": "user", "content": prompt},
+            ]
+
+            response_text = chat_with_model(model="llama4:scout", messages=messages)
 
             if not response_text:
-                raise ValueError("No content returned from OpenAI API")
+                raise ValueError("No content returned.")
             response_text = response_text.strip()
 
             if response_text.startswith("```json"):
@@ -144,26 +156,36 @@ class KnowledgeGraphBuilder:
 
     def extract_code_entities(self, code_content, language):
         # extract entities and relations from code
-        code_truncated = (
-            code_content[:1500] if len(code_content) > 1500 else code_content
-        )
+        # code_truncated = (
+        #     code_content[:1500] if len(code_content) > 1500 else code_content
+        # )
 
         prompt = f"""Extract programming entities and dependencies from the following {language} code. Return ONLY a valid JSON object without any additional text or formatting:
 
         {{"entities": [{{"name": "entity_name", "type": "function", "description": "functionality_description"}}], "relations": [{{"source": "source_entity", "target": "target_entity", "relation": "calls"}}]}}
 
-        Code: {code_truncated}"""
+        Code: {code_content}"""
 
         try:
-            response = self.client.chat.completions.create(
-                model="gpt-4o-mini",
-                messages=[{"role": "user", "content": prompt}],
-                temperature=0.1,
-            )
-            response_text = response.choices[0].message.content
+            # response = self.client.chat.completions.create(
+            #     model="gpt-4o-mini",
+            #     messages=[{"role": "user", "content": prompt}],
+            #     temperature=0.1,
+            # )
+            # response_text = response.choices[0].message.content
+
+            messages = [
+                {
+                    "role": "system",
+                    "content": "You are an assistant that extracts entities and relations from code.",
+                },
+                {"role": "user", "content": prompt},
+            ]
+
+            response_text = chat_with_model(model="llama4:scout", messages=messages)
 
             if not response_text:
-                raise ValueError("No content returned from OpenAI API")
+                raise ValueError("No content returned.")
 
             if response_text.startswith("```json"):
                 response_text = response_text[7:-3].strip()

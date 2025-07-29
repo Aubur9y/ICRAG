@@ -3,10 +3,8 @@ import re
 
 from dotenv import load_dotenv
 from openai import OpenAI
-from openai.types.chat import (
-    ChatCompletionSystemMessageParam,
-    ChatCompletionUserMessageParam,
-)
+
+from utils.model_service import chat_with_model_thinking, chat_with_model
 
 load_dotenv()
 
@@ -22,11 +20,11 @@ def create_evaluation_agent(type):
     2. whether there are logical transitions between paragraphs.
     3. whether the overall structure is clear enough.
     4. whether the presentation of ideas if consistent with no self-contradictory.
-    
-    Please rate the answer on a scale of 1-10 based on the above criterias, 
+
+    Please rate the answer on a scale of 1-10 based on the above criterias,
     where 1 is extremely incoherent, and 10 is very coherent.
     Please also provide detailed feedback on the reasons for your score and suggestions for improvement.
-    
+
     Remember, your very first line MUST be "COHERENCE EVALUATOR, FINAL SCORE: X/10" to ensure proper score extraction.
     """
 
@@ -38,11 +36,11 @@ def create_evaluation_agent(type):
     2. whether the answer use information from the relevant context.
     3. whether the answer contain any irrelevant information.
     4. whether any key pieces of information from the context are missing.
-    
-    Please rate the answer on a scale of 1-10 based on the above criterias, 
+
+    Please rate the answer on a scale of 1-10 based on the above criterias,
     where 1 indicated completely irrelevant and 10 indicates highly relevant.
     Please also provide detailed feedback on the reasons for your score and suggestions for improvement.
-    
+
     Remember, your very first line MUST be "RELEVANCE EVALUATOR, FINAL SCORE: X/10" to ensure proper score extraction.
     """
 
@@ -53,11 +51,11 @@ def create_evaluation_agent(type):
     2. whether the content of the answer is consistent with the information in the context.
     3. whether there are any incorrect inferences or overinterpretations.
     4. whether the context information is correctly cited or used.
-    
-    Please rate the answer on a scale of 1-10 based on the above criterias, 
+
+    Please rate the answer on a scale of 1-10 based on the above criterias,
     where 1 indicated significantly inaccurate and 10 indicates fully accurate.
     Please also provide detailed feedback on the reasons for your score and suggestions for improvement.
-    
+
     Remember, your very first line MUST be "ACCURACY EVALUATOR, FINAL SCORE: X/10" to ensure proper score extraction.
     """
 
@@ -69,29 +67,49 @@ def create_evaluation_agent(type):
         system_prompt = ACCURACY_PROMPT
 
     def evaluate(query, contexts, response):
+        # messages = [
+        #     ChatCompletionSystemMessageParam(content=system_prompt, role="system"),
+        #     ChatCompletionUserMessageParam(
+        #         content=f"""
+        #     User query: {query}
+        #
+        #     Provided contexts:
+        #     {contexts}
+        #
+        #     Generated response:
+        #     {response}
+        #
+        #     Please evaluate based on the above information.
+        #     """,
+        #         role="user",
+        #     ),
+        # ]
+        #
+        # result = client.chat.completions.create(
+        #     model="gpt-3.5-turbo", messages=messages, temperature=0.3
+        # )
+        #
+        # content = result.choices[0].message.content
+
         messages = [
-            ChatCompletionSystemMessageParam(content=system_prompt, role="system"),
-            ChatCompletionUserMessageParam(
-                content=f"""
-            User query: {query}
-            
-            Provided contexts:
-            {contexts}
-            
-            Generated response:
-            {response}
-            
-            Please evaluate based on the above information.
-            """,
-                role="user",
-            ),
+            {"role": "system", "content": system_prompt},
+            {
+                "role": "user",
+                "content": f"""
+                User query: {query}
+                
+                Provided contexts:
+                {contexts}
+                
+                Generated response:
+                {response}
+                
+                Please evaluate based on the above information.
+                """,
+            },
         ]
 
-        result = client.chat.completions.create(
-            model="gpt-3.5-turbo", messages=messages, temperature=0.3
-        )
-
-        content = result.choices[0].message.content
+        content = chat_with_model(messages=messages)
 
         score_match = re.search(r"FINAL SCORE:\s*(\d+(?:\.\d+)?)/10", content)
         if score_match:
@@ -143,7 +161,7 @@ def test_evaluator():
 
     # Context information that would be retrieved
     context = """
-    Transformer models were introduced in the paper "Attention Is All You Need" by Vaswani et al. in 2017. They have become the foundation of modern natural language processing (NLP) systems. 
+    Transformer models were introduced in the paper "Attention Is All You Need" by Vaswani et al. in 2017. They have become the foundation of modern natural language processing (NLP) systems.
 
     The main advantages of transformer models include:
     1. Parallelization: Unlike RNNs, transformers process all tokens simultaneously, allowing for much faster training on modern GPUs.
