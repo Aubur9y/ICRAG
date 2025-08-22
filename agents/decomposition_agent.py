@@ -41,7 +41,7 @@ class DecompositionAgent:
         )
         return embedding["embeddings"][0]
 
-    # 2. Feed to a llm, rewrite query into determiner form, llm gives K outcomes
+    # rewrite query into determiner form, llm gives K outcomes
     def rewrite_query(self, query_to_rewrite):
         messages = [
             {
@@ -52,21 +52,52 @@ class DecompositionAgent:
             },
             {"role": "user", "content": query_to_rewrite},
         ]
-        response = self.ollama_client.chat(model=self.llm_model, message=messages)
 
-        rewritten_messages = dict()
-        if response.message.content:
-            content = response.message.content
-            parts = [line for line in content.split("\n") if line.strip()]
+        try:
+            response = self.ollama_client.chat(model=self.llm_model, message=messages)
 
-            for i in range(len(parts)):
-                if parts[i][0].isdigit():
-                    match = re.match(r"^\d+\.\s+(.*)", parts[i])
-                    if match:
-                        rewritten_messages[i] = match.group(1).strip()
-        return rewritten_messages
+            rewritten_messages = dict()
+            if response.message.content:
+                content = response.message.content
+                parts = [line for line in content.split("\n") if line.strip()]
 
-    # 4. Perform cosine-similarity search and pick the best one
+                for i in range(len(parts)):
+                    if parts[i][0].isdigit():
+                        match = re.match(r"^\d+\.\s+(.*)", parts[i])
+                        if match:
+                            rewritten_messages[i] = match.group(1).strip()
+
+            if not rewritten_messages:
+                logger.warning("No rewrites generated, using original query")
+
+            return rewritten_messages
+        except Exception as e:
+            logger.error(f"Failed to rewrite query: {e}")
+            return {0: query_to_rewrite}
+
+    # this function is suggested by AI to add to improve diversity in generating variants of the original query
+    def _augment_with_synonyms(self, original_query: str, rewrite_dict: dict):
+        lowered = original_query.lower()
+        synonyms = []
+        if any(word in lowered for word in ["goal", "primary goal", "aim"]):
+            synonyms.append(original_query.replace("goal", "purpose"))
+            synonyms.append(original_query.replace("goal", "objective"))
+        if "purpose" in lowered:
+            synonyms.append(original_query.replace("purpose", "goal"))
+            synonyms.append(original_query.replace("purpose", "objective"))
+        if "objective" in lowered:
+            synonyms.append(original_query.replace("objective", "goal"))
+            synonyms.append(original_query.replace("objective", "purpose"))
+
+        idx = max(rewrite_dict.keys(), default=-1) + 1
+        for syn in synonyms:
+            if syn not in rewrite_dict.values():
+                rewrite_dict[idx] = syn
+                idx += 1
+
+        return rewrite_dict
+
+    # Perform cosine-similarity search and pick the best one
     def select_best_rewrite(self, original_embedding, rewrite_candidates):
         # Embed each candidate
         rewritten_queries_embeddings = dict()
@@ -75,7 +106,7 @@ class DecompositionAgent:
             rewritten_queries_embeddings[rewritten_query] = rewritten_embedding
 
         best_sim_score = -float("inf")
-        best_candidate = 0  # default 0
+        best_candidate = None
 
         for rewrite_query, rewrite_query_emb in rewritten_queries_embeddings.items():
             sim_score = self.similarity_fn(rewrite_query_emb, original_embedding)
@@ -83,10 +114,18 @@ class DecompositionAgent:
                 best_sim_score = sim_score
                 best_candidate = rewrite_query
 
+        if best_candidate is None:
+            logger.warning("No valid rewrite candidates found, using original query")
+            return "original query"
+
         return best_candidate
 
-    # 6. feed the final query into a llm and split into three sub-tasks
+    # feed the final query into a llm and split into three sub-tasks
     def decompose_query(self, rewritten_query):
+        if not rewritten_query or rewritten_query == 0:
+            logger.error(f"Invalid rewritten_query: {rewritten_query}")
+            return []
+
         sub_task_message = [
             {
                 "role": "system",
@@ -94,20 +133,33 @@ class DecompositionAgent:
             },
             {"role": "user", "content": rewritten_query},
         ]
-        response = self.ollama_client.chat(
-            model=self.llm_model, message=sub_task_message
-        )
-        sub_tasks = []
-        if response.message.content:
-            content = response.message.content
-            parts = [line for line in content.split("\n") if line.strip()]
 
-            for part in parts:
-                if part[0].isdigit():
-                    match = re.match(r"^\d+\.\s+(.*)", part)
-                    if match:
-                        sub_tasks.append(match.group(1).strip())
-        return sub_tasks
+        try:
+            response = self.ollama_client.chat(
+                model=self.llm_model, message=sub_task_message
+            )
+            sub_tasks = []
+            if response.message.content:
+                content = response.message.content
+                parts = [line for line in content.split("\n") if line.strip()]
+
+                for part in parts:
+                    if part[0].isdigit():
+                        match = re.match(r"^\d+\.\s+(.*)", part)
+                        if match:
+                            sub_tasks.append(match.group(1).strip())
+
+            if not sub_tasks:
+                logger.warning(
+                    "No sub-tasks generated, using original query as single task"
+                )
+                sub_tasks = [str(rewritten_query)]
+
+            return sub_tasks
+
+        except Exception as e:
+            logger.error(f"Failed to decompose query: {e}")
+            return [str(rewritten_query)]
 
     def process(self, query):
         # 1. Take in user query, embed it
@@ -116,6 +168,10 @@ class DecompositionAgent:
 
         # 2. Rewrite the original query and generate K candidates
         rewritten_queries_dict = self.rewrite_query(query)
+        # add synonym rewrites
+        rewritten_queries_dict = self._augment_with_synonyms(
+            query, rewritten_queries_dict
+        )
         logger.info("Rewriting query...")
 
         # 3. Select the best one based on cosine similarity score

@@ -123,6 +123,7 @@ def process_code_file(file_path, chunk_size=50):
 
 # Helper function for code processing function
 def split_code_into_chunks(content, file_extension, chunk_size=50):
+    # ChatGPT is used here to help deciding on how to chunk different code files
     lines = content.split("\n")
     chunks = []
     current_chunk = []
@@ -231,7 +232,7 @@ def split_code_into_chunks(content, file_extension, chunk_size=50):
     return chunks
 
 
-def process_text_file(file_path, chunk_size=500):
+def process_text_file(file_path, chunk_size=300, overlap=50):
     processed_chunks = []
     try:
         with open(file_path, "r") as f:
@@ -240,11 +241,13 @@ def process_text_file(file_path, chunk_size=500):
         print(f"File not found: {file_path}")
         return processed_chunks
 
-    chunks = [content[i : i + chunk_size] for i in range(0, len(content), chunk_size)]
-    for i, chunk in enumerate(chunks):
-        if not chunk.strip():
-            continue
+    chunks = []
+    for i in range(0, len(content), chunk_size - overlap):
+        chunk = content[i : i + chunk_size]
+        if chunk.strip():
+            chunks.append(chunk)
 
+    for i, chunk in enumerate(chunks):
         embedding = embed_text(chunk)
         processed_chunks.append(
             {
@@ -293,6 +296,7 @@ def process_pdf_file(file_path, chunk_size=500):
 
 
 if __name__ == "__main__":
+    # ChatGPT is used to generate tests for this file
     print("\n===== Test code chunking =====")
     py_code_path = Path(__file__)
 

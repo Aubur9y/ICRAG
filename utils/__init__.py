@@ -1,1 +1,1 @@
-from .model_utils import *
+from utils.deprecated.model_utils import *

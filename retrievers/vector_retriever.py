@@ -16,7 +16,7 @@ class VectorRetrieverAgent:
         qdrant_host="localhost",
         qdrant_port=6333,
         embedding_model_name="mxbai-embed-large",
-        top_k=5,
+        top_k=20,
     ):
         if collections is None:
             collections = [
@@ -37,7 +37,7 @@ class VectorRetrieverAgent:
         response = ollama_client.embed(model=self.embedding_model, input_text=query)
         return response["embeddings"][0]
 
-    def retrieve(self, query, filter=None, similarity_threshold=0.7):
+    def retrieve(self, query, filter=None, similarity_threshold=0.4):
         vector = self.embed_query(query)
 
         search_results = []

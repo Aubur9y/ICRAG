@@ -1,3 +1,4 @@
+import ollama
 import requests
 import re
 import os
@@ -25,16 +26,25 @@ def chat_with_model_thinking(model="deepseek-r1:70b", messages=None):
     return cleaned.strip()
 
 
-if __name__ == "__main__":
-    # res = chat_with_model(
-    #     "sk-a49b9000d26f46efbb5731b3cbe91636",
-    #     "llama4:latest",
-    #     messages=[{"role": "user", "content": "Why is the sky blue?"}],
-    # )
-    #
-    # print(res)
+# deepseek-r1:1.5b
+# qwen3:1.7b
+# llama3.2:3b
+# qwen3:8b
+def chat_with_ollama_local(model="qwen3:1.7b", messages=None, temperature=0.1):
+    try:
+        response = ollama.chat(
+            model=model,
+            messages=messages,
+            options={"temperature": temperature, "top_p": 0.9, "num_predict": 1024},
+        )
+        return response["message"]["content"]
+    except Exception as e:
+        print(f"Ollama local call failed: {e}")
+        raise Exception(f"Ollama call failed: {e}")
 
-    res = chat_with_model(
+
+if __name__ == "__main__":
+    res = chat_with_ollama_local(
         messages=[{"role": "user", "content": "Why is the sky blue?"}],
     )
 

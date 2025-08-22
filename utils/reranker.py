@@ -2,17 +2,21 @@ from sentence_transformers import CrossEncoder
 
 
 class Reranker:
+    _shared_cross_encoder = None
+
     def __init__(self):
-        self.cross_encoder = CrossEncoder("cross-encoder/ms-marco-MiniLM-L-6-v2")
+        # Load the CrossEncoder model only once (lazy singleton) to avoid re-loading on every pipeline run
+        if Reranker._shared_cross_encoder is None:
+            Reranker._shared_cross_encoder = CrossEncoder(
+                "cross-encoder/ms-marco-MiniLM-L-6-v2"
+            )
+        self.cross_encoder = Reranker._shared_cross_encoder
 
-    def cross_encoder_score(self, query, contexts):
+    def cross_encoder_score(self, query, context):
         cross_encoder = self.cross_encoder
-        pairs = [(query, context) for context in contexts]
-        scores = cross_encoder.predict(pairs)
-        # context_with_score_list = [(score, context) for score, context in zip(scores, contexts)]
-        # return context_with_score_list.sort(key=lambda x: x[1], reverse=True)
-
-        return scores
+        pair = (query, context)
+        score = cross_encoder.predict([pair])[0]
+        return score
 
     def source_reliability_score(self, source_type):
         reliability_weight = {
@@ -40,4 +44,5 @@ class Reranker:
         context_with_score_list = [
             (score, context) for score, context in zip(scores, contexts)
         ]
-        return context_with_score_list.sort(key=lambda x: x[1], reverse=True)
+        sorted_list = sorted(context_with_score_list, key=lambda x: x[0], reverse=True)
+        return [context for score, context in sorted_list]

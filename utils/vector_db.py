@@ -1,3 +1,5 @@
+import uuid
+import time
 import qdrant_client
 from qdrant_client.http.models import VectorParams
 from qdrant_client.models import PointStruct
@@ -13,6 +15,10 @@ from utils.constants import supported_code_file_extensions
 
 def qdrant_connection(url="http://localhost:6333"):
     return qdrant_client.QdrantClient(url=url)
+
+
+def generate_unique_id():
+    return int(time.time() * 1000000) + hash(uuid.uuid4()) % 1000000
 
 
 def save_ipynb_files_embeddings_to_qdrant(
@@ -39,7 +45,7 @@ def save_ipynb_files_embeddings_to_qdrant(
         points.append(
             # every entry is a point, pointstruct is to give a clear structure
             PointStruct(
-                id=i,
+                id=generate_unique_id(),
                 vector=chunk.get("embedding"),
                 payload={
                     "original_id": chunk.get("id"),
@@ -75,7 +81,7 @@ def save_code_files_embeddings_to_qdrant(file_path, collection_name="code_embedd
     for i, chunk in enumerate(chunks):
         points.append(
             PointStruct(
-                id=i,
+                id=generate_unique_id(),
                 vector=chunk.get("embedding"),
                 payload={
                     "original_id": chunk.get("id"),
@@ -99,7 +105,6 @@ def save_code_files_embeddings_to_qdrant(file_path, collection_name="code_embedd
 
 def save_pdf_files_embeddings_to_qdrant(file_path, collection_name="pdf_embeddings"):
     client = qdrant_connection()
-
     chunks = process_pdf_file(file_path)
     try:
         client.create_collection(
@@ -115,7 +120,7 @@ def save_pdf_files_embeddings_to_qdrant(file_path, collection_name="pdf_embeddin
     for i, chunk in enumerate(chunks):
         points.append(
             PointStruct(
-                id=i,
+                id=generate_unique_id(),
                 vector=chunk.get("embedding"),
                 payload={
                     "original_id": chunk.get("id"),
@@ -150,7 +155,7 @@ def save_text_files_embeddings_to_qdrant(file_path, collection_name="text_embedd
     for i, chunk in enumerate(chunks):
         points.append(
             PointStruct(
-                id=i,
+                id=generate_unique_id(),
                 vector=chunk.get("embedding"),
                 payload={
                     "original_id": chunk.get("id"),

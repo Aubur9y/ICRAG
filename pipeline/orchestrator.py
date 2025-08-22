@@ -12,6 +12,10 @@ from qdrant_client import QdrantClient
 from neo4j import GraphDatabase
 from utils.reranker import Reranker
 
+# ---------------------------------------------------------------------------
+# This file is not only for ablation tests of the report
+# ---------------------------------------------------------------------------
+
 
 class ToolReturnFilter(logging.Filter):
     def __init__(self, name=""):
@@ -158,20 +162,38 @@ def pipeline(user_query, max_retries=2):
     # prepare context for generation
     logger.info("Step 3: Aggregating context from sub-tasks.")
     contexts_for_generation = []
+
+    # extract pure output
     for result_item in pipeline_results:
         details = result_item.get("retrieval_details", {})
-        if details.get("status") == "no_relevant_information":
-            logger.warning(
-                f"No relevant information found for sub-task: {result_item.get('sub_task_query')}"
-            )
-        if details.get("status") == "tool_executed":
-            tool_output = details.get("tool_output")
-            if tool_output:
-                contexts_for_generation.append(str(tool_output))
-        elif details.get("status") == "direct_answer":
-            direct_answer = details.get("direct_answer_content")
-            if direct_answer:
-                contexts_for_generation.append(str(direct_answer))
+        status = details.get("status")
+        if status == "direct_answer":
+            direct_text = details.get("direct_answer_content")
+            if direct_text:
+                contexts_for_generation.append(str(direct_text))
+            continue
+
+        if status == "tool_executed":
+            tool_name = details.get("tool_name")
+            output = details.get("tool_output")
+            # extract payload.content from vector search
+            if tool_name == "vector_search":
+                if isinstance(output, list):
+                    for item in output[:12]:
+                        payload = (
+                            item.get("payload", {}) if isinstance(item, dict) else {}
+                        )
+                        content = payload.get("content") or payload.get("text")
+                        if content:
+                            contexts_for_generation.append(str(content))
+                else:
+                    contexts_for_generation.append(str(output))
+            # Graph/Web search prioritise context
+            elif tool_name in ("graph_search", "web_search"):
+                if isinstance(output, dict) and "context" in output:
+                    contexts_for_generation.append(str(output.get("context")))
+                else:
+                    contexts_for_generation.append(str(output))
 
     has_relevant_info = any(
         result_item.get("retrieval_details", {}).get("status")
@@ -180,20 +202,24 @@ def pipeline(user_query, max_retries=2):
     )
 
     if not has_relevant_info or not contexts_for_generation:
-        return "Sorry, I couldn't find any information related to your query in my knowledge base."
+        # return "Sorry, I couldn't find any information related to your query in my knowledge base."
+        return {
+            "question": user_query,
+            "contexts": [],
+            "answers": "Sorry, I couldn't find any information related to your query in my knowledge base.",
+        }
 
-    # logger.info(f"Contexts for generation: {contexts_for_generation}")
-
-    # rerank
+    contexts_for_generation = list(dict.fromkeys(contexts_for_generation))
     reranker = Reranker()
     contexts_for_generation = reranker.rerank(
-        best_rewritten_query, contexts_for_generation
-    )
+        best_rewritten_query or user_query, contexts_for_generation
+    )[:8]
 
-    logger.info("Context reranked")
-
-    # make decision
-    final_context_str = "\n\n---\n\n".join(contexts_for_generation)
+    # enumerate context, easy for model to cite by Context N
+    enumerated_contexts = [
+        f"Context {idx + 1}:\n{ctx}" for idx, ctx in enumerate(contexts_for_generation)
+    ]
+    final_context_str = "\n\n---\n\n".join(enumerated_contexts)
 
     decision_agent = DecisionAgent()
     current_response_content = ""
@@ -209,34 +235,55 @@ def pipeline(user_query, max_retries=2):
                 best_rewritten_query if best_rewritten_query else user_query
             )
             prompt_for_generation = f"""
-            Answer the question: "{query_to_answer}" based on the following context:
-            context: {final_context_str}
+            You will receive several context passages numbered as Context 1, Context 2, ... .
 
-            Please provide an accurate and comprehensive response based on the above contexts.
+            Instructions:
+            1. Answer the Question directly and concisely (≤150 words) using ONLY the information from those passages; cite them like (Context N).
+            2. If the answer cannot be found in the passages, reply exactly: CANNOT_FIND.
+
+            Question:
+            {query_to_answer}
+
+            Context passages:
+            {final_context_str}
             """
         else:
             # calibration prompt
             logger.info("Constructing calibration prompt with feedback.")
             prompt_for_generation = f"""
-            Your previous attempt to answer the question "{best_rewritten_query}" was not sufficient.
+            Your previous attempt to answer the question "{best_rewritten_query or user_query}" was not sufficient.
 
             Here is the feedback on your last answer:
             --- FEEDBACK ---
             {last_feedback}
             --- END FEEDBACK ---
 
-            Here is the original context again:
+            Here is the original context again (numbered as Context N):
             --- CONTEXT ---
             {final_context_str}
             --- END CONTEXT ---
 
-            Please generate a new, improved answer that directly addresses the feedback and better utilises the provided context.
+            Please generate a new, improved answer that directly addresses the feedback and better utilises the provided context. Remember to cite like (Context N) and reply exactly CANNOT_FIND if not answerable from context.
             """
             logger.info(f"Feedback: {prompt_for_generation}")
 
         t_gen = time.time()
         generated_response = decision_agent.generate(prompt_for_generation)
-        current_response_content = generated_response.content
+        raw_answer_text = (
+            generated_response
+            if isinstance(generated_response, str)
+            else generated_response.content
+        )
+
+        # Strip any chain-of-thought blocks like <think>...</think> or leading markdown headers
+        import re
+
+        def _clean_answer(text: str) -> str:
+            text = re.sub(r"<think>[\s\S]*?</think>", "", text, flags=re.IGNORECASE)
+            text = re.sub(r"^\s*[#\-]{2,}.*$", "", text, flags=re.MULTILINE)
+            return text.strip()
+
+        current_response_content = _clean_answer(raw_answer_text)
         logger.info(f"Time taken for generation: {time.time() - t_gen:.2f}s")
 
         logger.info(f"Step 5.{attempt + 1}: Evaluating the generated response.")

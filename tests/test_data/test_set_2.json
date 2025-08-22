@@ -1,0 +1,27 @@
+[
+    {
+    "Level": "Remembering",
+    "Question": "What is the primary goal of climate models?",
+    "Answer": "To simulate and predict climate systems using mathematical representations of physical processes."
+    },
+    {
+    "Level": "Understanding",
+    "Question": "Explain why climate data is essential in environmental science.",
+    "Answer": "Climate data is crucial because it supports understanding environmental dynamics, evaluating the effects of climate change, and informs policy, adaptation, and mitigation strategies."
+    },
+    {
+    "Level": "Applying",
+    "Question": "How would you use discretization to convert a climate model equation into a numerically solvable format?",
+    "Answer": "By approximating derivatives with finite differences (e.g., forward, backward, or centered), allowing numerical integration across time and space."
+    },
+    {
+    "Level": "Analyzing",
+    "Question": "How do discretization schemes (e.g., forward Euler, backward Euler, centered difference) influence the accuracy and stability of climate models?",
+    "Answer": "Each scheme handles numerical integration differently, affecting model stability and accuracy. Forward Euler is simple but less stable, backward Euler is more stable but computationally demanding, and centered difference is more accurate but requires more data points. These differences lead to varied results even for the same equations."
+    },
+    {
+    "Level": "Evaluating",
+    "Question": "To what extent do you agree with the proposition that 'all models are wrong, but some are useful' in the context of climate modeling?",
+    "Answer": "Agreeing is reasonable because climate models are inherently simplifications with assumptions and limitations, but they are internally consistent and help test hypotheses, forecast trends, and support policy decisions."
+    }
+]

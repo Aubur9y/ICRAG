@@ -7,8 +7,13 @@ from openai.types.chat import (
     ChatCompletionSystemMessageParam,
     ChatCompletionUserMessageParam,
 )
+from concurrent.futures import ThreadPoolExecutor
 
-from utils.model_service import chat_with_model_thinking, chat_with_model
+from utils.model_service import (
+    chat_with_model_thinking,
+    chat_with_model,
+    chat_with_ollama_local,
+)
 
 load_dotenv()
 
@@ -17,6 +22,7 @@ class ComponentEvaluator:
     def __init__(self):
         self.client = OpenAI(api_key=os.environ.get("OPENAI_API_KEY"))
 
+        # the following prompts are formatted and enhanced by ChatGPT
         self.COHERENCE_PROMPT = """
         You are an evaluator specialised in evaluating coherency.
         Your job is to evaluate if the given answer to a question is clear, well-structured and logically coherent.
@@ -70,7 +76,6 @@ class ComponentEvaluator:
         Evaluation Criteria:
         1.Whether the subtasks fully cover all aspects of the original query
         2.Whether the granularity of the subtasks is appropriate — neither too broad nor too fragmented 
-        3.Whether the subtasks have logical relationships and prioritization
         4.Whether the decomposition helps retrieve relevant information
 
         Please provide a score from 1 to 10 and give concrete suggestions for improvement.
@@ -111,9 +116,15 @@ class ComponentEvaluator:
         return self.get_evaluation(prompt, content)
 
     def evaluate_generation(self, query, contexts, response):
-        coherence_eval = self.evaluate_coherence(query, contexts, response)
-        relevance_eval = self.evaluate_relevance(query, contexts, response)
-        accuracy_eval = self.evaluate_accuracy(query, contexts, response)
+        # Run three sub-evaluations in parallel to save time
+        # I asked ChatGPT for help on how to create a threadpool
+        with ThreadPoolExecutor(max_workers=3) as executor:
+            f_coh = executor.submit(self.evaluate_coherence, query, contexts, response)
+            f_rel = executor.submit(self.evaluate_relevance, query, contexts, response)
+            f_acc = executor.submit(self.evaluate_accuracy, query, contexts, response)
+            coherence_eval = f_coh.result()
+            relevance_eval = f_rel.result()
+            accuracy_eval = f_acc.result()
 
         weights = {"coherence": 0.3, "relevance": 0.4, "accuracy": 0.3}
         total_score = (
@@ -184,22 +195,13 @@ class ComponentEvaluator:
         )
 
     def get_evaluation(self, system_prompt, user_context, score_pattern=None):
-        # messages = [
-        #     ChatCompletionSystemMessageParam(content=system_prompt, role="system"),
-        #     ChatCompletionUserMessageParam(content=user_context, role="user"),
-        # ]
-        #
-        # result = self.client.chat.completions.create(
-        #     model="gpt-3.5-turbo", messages=messages, temperature=0.3
-        # )
-        # content = result.choices[0].message.content
-
         messages = [
             {"role": "system", "content": system_prompt},
             {"role": "user", "content": user_context},
         ]
 
-        content = chat_with_model(messages=messages)
+        # content = chat_with_model(messages=messages)
+        content = chat_with_ollama_local(messages=messages)
 
         if score_pattern:
             score_match = re.search(score_pattern, content)
@@ -245,6 +247,10 @@ class ComponentEvaluator:
         evaluations["generation"] = self.evaluate_generation(
             original_query, final_contexts, final_response
         )
+
+        print(f"Decomposition feedback: {evaluations["decomposition"]["content"]}")
+        print(f"Retrieval feedback: {evaluations["retrieval"]["content"]}")
+        print(f"Generation feedback: {evaluations["generation"]["content"]}")
 
         decomp_score = evaluations["decomposition"]["score"]
         avg_retrieval_score = sum(

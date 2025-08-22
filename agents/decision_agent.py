@@ -8,7 +8,11 @@ from openai.types.chat import (
     ChatCompletionUserMessageParam,
 )
 
-from utils.model_service import chat_with_model, chat_with_model_thinking
+from utils.model_service import (
+    chat_with_model,
+    chat_with_model_thinking,
+    chat_with_ollama_local,
+)
 from utils.prompt_templates import DECISION_AGENT_GENERATION_PROMPT
 
 load_dotenv()
@@ -20,23 +24,17 @@ class DecisionAgent:
         self.system_prompt = DECISION_AGENT_GENERATION_PROMPT
 
     # take in the contexts generated from last step
-    def generate(self, user_prompt, confidence_level="high"):
-        if confidence_level == "low":
-            system_prompt = (
-                self.system_prompt
-                + "\nIMPORTANT: The retrieved information has low relevance to the query. Express uncertainty clearly and avoid making definitive statements. If you cannot provide a reliable answer based on the context, state this clearly."
-            )
+    def generate(self, user_prompt, confidence_level="high", mode: str = "strict"):
+        if mode == "open":
+            system_prompt = "You are a helpful assistant. Answer clearly and concisely."
         else:
-            system_prompt = self.system_prompt
-
-        # Using OpenAI API
-        # messages = [
-        #     ChatCompletionSystemMessageParam(role="system", content=system_prompt),
-        #     ChatCompletionUserMessageParam(role="user", content=user_prompt),
-        # ]
-        # response = self.client.chat.completions.create(
-        #     model=self.model, messages=messages
-        # )
+            if confidence_level == "low":
+                system_prompt = (
+                    self.system_prompt
+                    + "\nIMPORTANT: The retrieved information has low relevance to the query. Express uncertainty clearly and avoid making definitive statements. If you cannot provide a reliable answer based on the context, state this clearly."
+                )
+            else:
+                system_prompt = self.system_prompt
 
         # Using OpenWebUI API
         messages = [
@@ -45,15 +43,15 @@ class DecisionAgent:
         ]
 
         t0 = time.time()
-        response = chat_with_model(
-            messages=messages,
-        )
+
+        response = chat_with_ollama_local(messages=messages)
 
         print(f"Time taken for DecisionAgent: {time.time() - t0:.2f}s")
         return response
 
 
 if __name__ == "__main__":
+    # The following test cases are developed under the guidance of ChatGPT
     context = """
         Context 1: Smart City Technologies
         Smart cities integrate Internet of Things (IoT) devices, sensors, and data analytics platforms to monitor and manage urban resources efficiently. Key components include smart grids that optimize electricity distribution, intelligent transportation systems that reduce congestion by 15-30%, and connected infrastructure that enables real-time decision making. Studies show that implementing comprehensive IoT networks can reduce energy consumption in urban areas by up to 20% and cut operational costs by approximately $12 billion annually across major metropolitan areas.

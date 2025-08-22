@@ -4,7 +4,11 @@ import re
 from dotenv import load_dotenv
 from openai import OpenAI
 
-from utils.model_service import chat_with_model_thinking, chat_with_model
+from utils.model_service import (
+    chat_with_model_thinking,
+    chat_with_model,
+    chat_with_ollama_local,
+)
 
 load_dotenv()
 
@@ -12,6 +16,7 @@ load_dotenv()
 def create_evaluation_agent(type):
     client = OpenAI(api_key=os.environ.get("OPENAI_API_KEY"))
 
+    # the following prompts was formatted and enhanced by ChatGPT
     COHERENCE_PROMPT = """
     You are an evaluator specialised in evaluating coherency.
     Your job is to evaluate if the given answer to a question is clear, well-structured and logically coherent.
@@ -67,30 +72,6 @@ def create_evaluation_agent(type):
         system_prompt = ACCURACY_PROMPT
 
     def evaluate(query, contexts, response):
-        # messages = [
-        #     ChatCompletionSystemMessageParam(content=system_prompt, role="system"),
-        #     ChatCompletionUserMessageParam(
-        #         content=f"""
-        #     User query: {query}
-        #
-        #     Provided contexts:
-        #     {contexts}
-        #
-        #     Generated response:
-        #     {response}
-        #
-        #     Please evaluate based on the above information.
-        #     """,
-        #         role="user",
-        #     ),
-        # ]
-        #
-        # result = client.chat.completions.create(
-        #     model="gpt-3.5-turbo", messages=messages, temperature=0.3
-        # )
-        #
-        # content = result.choices[0].message.content
-
         messages = [
             {"role": "system", "content": system_prompt},
             {
@@ -109,12 +90,14 @@ def create_evaluation_agent(type):
             },
         ]
 
-        content = chat_with_model(messages=messages)
+        # content = chat_with_model(messages=messages)
+        content = chat_with_ollama_local(messages=messages)
 
         score_match = re.search(r"FINAL SCORE:\s*(\d+(?:\.\d+)?)/10", content)
         if score_match:
             score = float(score_match.group(1))
         else:
+            # find the score in the response
             score_match = re.search(
                 r"score[:\s]+(\d+(?:\.\d+)?)", content, re.IGNORECASE
             )
@@ -157,6 +140,7 @@ class Evaluator:
 
 def test_evaluator():
     # Sample user query
+    # this test is created using ChatGPT
     query = "What are the main advantages and limitations of transformer models in NLP?"
 
     # Context information that would be retrieved

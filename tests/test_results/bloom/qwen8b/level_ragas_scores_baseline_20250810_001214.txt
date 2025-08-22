@@ -1,0 +1,1 @@
+{'faithfulness': 0.9374, 'answer_relevancy': 0.0866, 'context_precision': 0.8147, 'context_recall': 0.8833}

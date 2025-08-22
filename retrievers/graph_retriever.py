@@ -4,7 +4,11 @@ import logging
 from pathlib import Path
 from dotenv import load_dotenv
 
-from utils.model_service import chat_with_model_thinking, chat_with_model
+from utils.model_service import (
+    chat_with_model_thinking,
+    chat_with_model,
+    chat_with_ollama_local,
+)
 from utils.ollama_client import OllamaClient
 
 import networkx as nx
@@ -85,18 +89,37 @@ class Neo4jConnection:
         }
         return self.query(query, params)
 
-    def search_similar_nodes(self, query_embedding, k=3):
+    def search_similar_nodes(self, query_embedding, k=3, similarity_threshold=0.5):
+        # Cypher query is writen under the guidance of ChatGPT
         query = """
         MATCH (n:Entity)
         WHERE n.embedding IS NOT NULL
         WITH n,
-             reduce(dot = 0.0, i IN range(0, size(n.embedding)-1) |
-                    dot + n.embedding[i] * $query_embedding[i]) as similarity
+            reduce(dot = 0.0, i IN range(0, size(n.embedding)-1) |
+                    dot + n.embedding[i] * $query_embedding[i]) as dot_product,
+            sqrt(reduce(sum = 0.0, i IN range(0, size(n.embedding)-1) |
+                    sum + n.embedding[i] * n.embedding[i])) as node_norm,
+            sqrt(reduce(sum = 0.0, i IN range(0, size($query_embedding)-1) |
+                    sum + $query_embedding[i] * $query_embedding[i])) as query_norm
+        WITH n, dot_product, node_norm, query_norm,
+            CASE 
+            WHEN node_norm > 0 AND query_norm > 0 
+            THEN dot_product / (node_norm * query_norm)
+            ELSE 0.0 
+            END as similarity
+        WHERE similarity >= $similarity_threshold
         ORDER BY similarity DESC
         LIMIT toInteger($k)
         RETURN n, similarity
         """
-        return self.query(query, {"query_embedding": query_embedding, "k": k})
+        return self.query(
+            query,
+            {
+                "query_embedding": query_embedding,
+                "k": k,
+                "similarity_threshold": similarity_threshold,
+            },
+        )
 
 
 class KnowledgeGraphBuilder:
@@ -107,21 +130,21 @@ class KnowledgeGraphBuilder:
     def extract_entities_and_relations(self, text):
         # extract entities and relations from text
         # text_truncated = text[:1500] if len(text) > 1500 else text
+        prompt = f"""Extract key entities and their relationships from the following text. Focus on:
+        1. Important concepts, terms, and definitions
+        2. Key facts and statements
+        3. Relationships between entities
 
-        prompt = f"""Extract entities and relations from the following text. Return ONLY a valid JSON object without any additional text or formatting:
-
-        {{"entities": [{{"name": "entity_name", "type": "entity_type", "description": "brief_description"}}], "relations": [{{"source": "source_entity", "target": "target_entity", "relation": "relation_type"}}]}}
-
+        Return ONLY a valid JSON object:
+        {{"entities": [
+            {{"name": "entity_name", "type": "concept|term|definition|fact", "description": "clear_description"}}
+        ], "relations": [
+            {{"source": "source_entity", "target": "target_entity", "relation": "defines|explains|relates_to|is_part_of"}}
+        ]}}
+ 
         Text: {text}"""
 
         try:
-            # response = self.client.chat.completions.create(
-            #     model="gpt-4o-mini",
-            #     messages=[{"role": "user", "content": prompt}],
-            #     temperature=0.1,
-            # )
-            # response_text = response.choices[0].message.content
-
             messages = [
                 {
                     "role": "system",
@@ -130,7 +153,8 @@ class KnowledgeGraphBuilder:
                 {"role": "user", "content": prompt},
             ]
 
-            response_text = chat_with_model(model="llama4:scout", messages=messages)
+            # response_text = chat_with_model(model="llama4:scout", messages=messages)
+            response_text = chat_with_ollama_local(messages=messages)
 
             if not response_text:
                 raise ValueError("No content returned.")
@@ -155,11 +179,6 @@ class KnowledgeGraphBuilder:
             return {"entities": [], "relations": []}
 
     def extract_code_entities(self, code_content, language):
-        # extract entities and relations from code
-        # code_truncated = (
-        #     code_content[:1500] if len(code_content) > 1500 else code_content
-        # )
-
         prompt = f"""Extract programming entities and dependencies from the following {language} code. Return ONLY a valid JSON object without any additional text or formatting:
 
         {{"entities": [{{"name": "entity_name", "type": "function", "description": "functionality_description"}}], "relations": [{{"source": "source_entity", "target": "target_entity", "relation": "calls"}}]}}
@@ -167,13 +186,6 @@ class KnowledgeGraphBuilder:
         Code: {code_content}"""
 
         try:
-            # response = self.client.chat.completions.create(
-            #     model="gpt-4o-mini",
-            #     messages=[{"role": "user", "content": prompt}],
-            #     temperature=0.1,
-            # )
-            # response_text = response.choices[0].message.content
-
             messages = [
                 {
                     "role": "system",
@@ -182,7 +194,8 @@ class KnowledgeGraphBuilder:
                 {"role": "user", "content": prompt},
             ]
 
-            response_text = chat_with_model(model="llama4:scout", messages=messages)
+            # response_text = chat_with_model(model="llama4:scout", messages=messages)
+            response_text = chat_with_ollama_local(messages=messages)
 
             if not response_text:
                 raise ValueError("No content returned.")
@@ -242,15 +255,6 @@ class KnowledgeGraphBuilder:
                 results.append((chunk, entities_relations))
 
         for chunk, entities_relations in results:
-            # content = chunk['content']
-            # chunk_type = chunk['type']
-
-            # if chunk_type == 'code':
-            #     language = chunk.get('language', 'unknown')
-            #     entities_relations = self.extract_code_entities(content, language)
-            # else:
-            #     entities_relations = self.extract_entities_and_relations(content)
-
             # add entity nodes
             for entity in entities_relations["entities"]:
                 node_id = f"{entity['name']}_{entity['type']}"
@@ -322,10 +326,13 @@ class NodeEmbedder:
         self.ollama_client = OllamaClient()
         self.embedding_model = "mxbai-embed-large"
 
+    # this function generates embedding for a node from node data
     def generate_node_embedding(self, node_data):
         try:
             # generate embedding for graph node
             node_text = self.create_node_text(node_data)
+            print(f"Generating embedding for node text: {node_text}")
+
             responses = self.ollama_client.embed(
                 model=self.embedding_model, input_text=node_text
             )
@@ -334,7 +341,10 @@ class NodeEmbedder:
                 and "embeddings" in responses
                 and len(responses["embeddings"]) > 0
             ):
-                return responses["embeddings"][0]
+                embedding = responses["embeddings"][0]
+                print(f"Generated embedding length: {len(embedding)}")
+                print(f"Generated embedding sample: {embedding[:5]}")
+                return embedding
             else:
                 raise ValueError("Invalid embedding response")
         except Exception as e:
@@ -365,9 +375,6 @@ class NodeEmbedder:
                 node_id, embedding = future.result()
                 node_embeddings[node_id] = embedding
 
-        # for node_id, node_data in graph.nodes(data=True):
-        #     embedding = self.generate_node_embedding(node_data)
-        #     node_embeddings[node_id] = embedding
         return node_embeddings
 
 
@@ -388,6 +395,8 @@ class GraphRAGRetriever:
             self.neo4j_conn.create_relationship(source, target, rel_type, edge_data)
 
     def retrieve_relevant_subgraph(self, query, k=3, hops=2):
+        print(f"Generating embedding for query: {query}")
+
         response = self.embedder.ollama_client.embed(
             model=self.embedder.embedding_model, input_text=query
         )
@@ -395,7 +404,21 @@ class GraphRAGRetriever:
             raise ValueError("No embedding returned for query")
         query_embedding = response["embeddings"][0]
 
+        print(f"Query embedding length: {len(query_embedding)}")
+        print(f"Query embedding sample: {query_embedding[:5]}")
+
+        query_norm = sum(x * x for x in query_embedding) ** 0.5
+        print(f"Query norm: {query_norm}")
+
         similar_nodes = self.neo4j_conn.search_similar_nodes(query_embedding, k)
+
+        print(f"Found {len(similar_nodes)} similar nodes")
+        for i, record in enumerate(similar_nodes):
+            node = record["n"]
+            similarity = record["similarity"]
+            print(
+                f"Node {i+1}: {node.get('name', node.get('id'))}, Similarity: {similarity}"
+            )
 
         if not similar_nodes:
             return {"context": "No relevant nodes found", "similarity_scores": []}
